@@ -43,7 +43,7 @@ class OmniAnomaly(VarScopeObject):
                 ) if config.use_connected_z_p else Normal(mean=tf.zeros([config.z_dim]), std=tf.ones([config.z_dim])),
                 p_x_given_z=Normal,
                 q_z_given_x=partial(RecurrentDistribution,
-                                    mean_q_mlp=partial(tf.layers.dense, units=config.z_dim, name='z_mean', reuse=tf.AUTO_REUSE),
+                                    mean_q_mlp=partial(tf.layers.dense, units=config.z_dim, name='z_mean', reuse=tf.compat.v1.AUTO_REUSE),
                                     std_q_mlp=partial(softplus_std, units=config.z_dim, epsilon=config.std_epsilon,
                                                       name='z_std'),
                                     z_dim=config.z_dim, window_length=config.window_length) if config.use_connected_z_q else Normal,
@@ -57,7 +57,7 @@ class OmniAnomaly(VarScopeObject):
                                                  dense_dim=config.dense_dim,
                                                  name='rnn_p_x'),
                         mean_layer=partial(
-                            tf.layers.dense, units=config.x_dim, name='x_mean', reuse=tf.AUTO_REUSE
+                            tf.layers.dense, units=config.x_dim, name='x_mean', reuse=tf.compat.v1.AUTO_REUSE
                         ),
                         std_layer=partial(
                             softplus_std, units=config.x_dim, epsilon=config.std_epsilon,
@@ -84,7 +84,7 @@ class OmniAnomaly(VarScopeObject):
                                                  dense_dim=config.dense_dim,
                                                  name="rnn_q_z"),
                         mean_layer=partial(
-                            tf.layers.dense, units=config.z_dim, name='z_mean', reuse=tf.AUTO_REUSE
+                            tf.layers.dense, units=config.z_dim, name='z_mean', reuse=tf.compat.v1.AUTO_REUSE
                         ),
                         std_layer=partial(
                             softplus_std, units=config.z_dim, epsilon=config.std_epsilon,
@@ -134,7 +134,7 @@ class OmniAnomaly(VarScopeObject):
             tf.Tensor: 0-d tensor, the training loss, which can be optimized
                 by gradient descent algorithms.
         """
-        with tf.name_scope('training_loss'):
+        with tf.compat.v1.name_scope('training_loss'):
             chain = self.vae.chain(x, n_z=n_z, posterior_flow=self._posterior_flow)
             x_log_prob = chain.model['x'].log_prob(group_ndims=0)
             log_joint = tf.reduce_sum(x_log_prob, -1)
@@ -174,7 +174,7 @@ class OmniAnomaly(VarScopeObject):
                 first ``self.x_dims - 1`` points are not the last point of
                 any window.
         """
-        with tf.name_scope('get_score'):
+        with tf.compat.v1.name_scope('get_score'):
             x_r = x
 
             # get the reconstruction probability

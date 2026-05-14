@@ -97,7 +97,7 @@ def main():
                  test_start=config.test_start)
 
     # construct the model under `variable_scope` named 'model'
-    with tf.variable_scope('model') as model_vs:
+    with tf.compat.v1.variable_scope('model') as model_vs:
         model = OmniAnomaly(config=config, name="model")
 
         # construct the trainer
@@ -116,7 +116,7 @@ def main():
         predictor = Predictor(model, batch_size=config.batch_size, n_z=config.test_n_z,
                               last_point_only=True)
 
-        with tf.Session().as_default():
+        with tf.compat.v1.Session().as_default():
 
             if config.restore_dir is not None:
                 # Restore variables from `save_dir`.
@@ -192,6 +192,7 @@ def main():
                 # save the variables
                 var_dict = get_variables_as_dict(model_vs)
                 saver = VariableSaver(var_dict, config.save_dir)
+                # TODO: add argument save_format='h5'
                 saver.save()
             print('=' * 30 + 'result' + '=' * 30)
             pprint(best_valid_metrics)

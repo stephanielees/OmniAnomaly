@@ -177,7 +177,7 @@ class VAE(VarScopeObject):
             # However, in order for ``tf.variable_scope(default_name=...)``
             # to work properly with variable reusing, we must generate a nested
             # unique name scope.
-            with tf.name_scope('forward'):
+            with tf.compat.v1.name_scope('forward'):
                 return self._forward(inputs, **kwargs)
 
     @property
@@ -269,12 +269,12 @@ class VAE(VarScopeObject):
         if z is not None:
             observed['z'] = z
         net = BayesianNet(observed=observed)
-        with tf.variable_scope('h_for_q_z'):
+        with tf.compat.v1.variable_scope('h_for_q_z'):
             z_params = self.h_for_q_z(x)
-        with tf.variable_scope('q_z_given_x'):
+        with tf.compat.v1.variable_scope('q_z_given_x'):
             q_z_given_x = self.q_z_given_x(**z_params)
             assert (isinstance(q_z_given_x, Distribution))
-        with tf.name_scope('z'):
+        with tf.compat.v1.name_scope('z'):
             z = net.add('z', q_z_given_x, n_samples=n_z,
                         group_ndims=self.z_group_ndims,
                         is_reparameterized=self.is_reparameterized,
@@ -309,16 +309,16 @@ class VAE(VarScopeObject):
         """
         observed = {k: v for k, v in [('z', z), ('x', x)] if v is not None}
         net = BayesianNet(observed=observed)
-        with tf.name_scope('z'):
+        with tf.compat.v1.name_scope('z'):
             z = net.add('z', self.p_z, n_samples=n_z,
                         group_ndims=self.z_group_ndims,
                         is_reparameterized=self.is_reparameterized)
-        with tf.variable_scope('h_for_p_x'):
+        with tf.compat.v1.variable_scope('h_for_p_x'):
             x_params = self.h_for_p_x(z)
-        with tf.variable_scope('p_x_given_z'):
+        with tf.compat.v1.variable_scope('p_x_given_z'):
             p_x_given_z = self.p_x_given_z(**x_params)
             assert (isinstance(p_x_given_z, Distribution))
-        with tf.name_scope('x'):
+        with tf.compat.v1.name_scope('x'):
             x = net.add('x', p_x_given_z, n_samples=n_x,
                         group_ndims=self.x_group_ndims)
         return net
@@ -347,7 +347,7 @@ class VAE(VarScopeObject):
         Returns:
             VariationalChain: The variational chain.
         """
-        with tf.name_scope('VAE.chain'):
+        with tf.compat.v1.name_scope('VAE.chain'):
             q_net = self.variational(x, n_z=n_z, posterior_flow=posterior_flow)
 
             # automatically detect the `latent_axis` for this chain
@@ -401,7 +401,7 @@ class VAE(VarScopeObject):
             :class:`tfsnippet.variational.VariationalChain`,
             :class:`tfsnippet.variational.VariationalTrainingObjectives`
         """
-        with tf.name_scope('VAE.get_training_loss'):
+        with tf.compat.v1.name_scope('VAE.get_training_loss'):
             if n_z is not None:
                 if is_tensor_object(n_z):
                     raise TypeError('Cannot choose the variational solver '
@@ -440,7 +440,7 @@ class VAE(VarScopeObject):
         Returns:
             StochasticTensor: The reconstructed samples `x`.
         """
-        with tf.name_scope('VAE.reconstruct'):
+        with tf.compat.v1.name_scope('VAE.reconstruct'):
             q_net = self.variational(x, n_z=n_z, posterior_flow=posterior_flow)
             model = self.model(z=q_net['z'], n_z=n_z, n_x=n_x)
             return model['x']
@@ -513,6 +513,6 @@ class Lambda(VarScopeObject):
             # However, in order for ``tf.variable_scope(default_name=...)``
             # to work properly with variable reusing, we must generate a nested
             # unique name scope.
-            with tf.name_scope('forward'):
+            with tf.compat.v1.name_scope('forward'):
                 return self._forward(inputs, **kwargs)
 

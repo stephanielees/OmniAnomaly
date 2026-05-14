@@ -48,9 +48,9 @@ class Predictor(VarScopeObject):
 
         with reopen_variable_scope(self.variable_scope):
             # input placeholders
-            self._input_x = tf.placeholder(
+            self._input_x = tf.compat.v1.placeholder(
                 dtype=tf.float32, shape=[None, model.window_length, model.x_dims], name='input_x')
-            self._input_y = tf.placeholder(
+            self._input_y = tf.compat.v1.placeholder(
                 dtype=tf.int32, shape=[None, model.window_length], name='input_y')
 
             # outputs of interest
@@ -59,7 +59,7 @@ class Predictor(VarScopeObject):
     def _get_score_without_y(self):
         if self._score_without_y is None:
             with reopen_variable_scope(self.variable_scope), \
-                 tf.name_scope('score_without_y'):
+                 tf.compat.v1.name_scope('score_without_y'):
                 self._score_without_y, self._q_net_z = self.model.get_score(
                     x=self._input_x,
                     n_z=self._n_z,
@@ -94,7 +94,7 @@ class Predictor(VarScopeObject):
                 1-D array if `last_point_only` is :obj:`True`,
                 or 2-D array if `last_point_only` is :obj:`False`.
         """
-        with tf.name_scope('Predictor.get_score'):
+        with tf.compat.v1.name_scope('Predictor.get_score'):
             sess = get_default_session_or_error()
             collector = []
             collector_z = []
