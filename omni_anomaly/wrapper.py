@@ -89,7 +89,6 @@ def rnn(x,
         dense_dim=200,
         time_axis=1,
         name='rnn'):
-    from tensorflow.contrib import rnn
     with tf.compat.v1.variable_scope(name, reuse=tf.compat.v1.AUTO_REUSE):
         if len(x.shape) == 4:
             x = tf.reduce_mean(x, axis=0)
@@ -100,8 +99,7 @@ def rnn(x,
         if rnn_cell == 'LSTM':
             # Define lstm cells with TensorFlow
             # Forward direction cell
-            fw_cell = rnn.BasicLSTMCell(rnn_num_hidden,
-                                        forget_bias=1.0)
+            fw_cell = tf.compat.v1.nn.rnn_cell.LSTMCell(rnn_num_hidden, forget_bias=1.0)
         elif rnn_cell == "GRU":
             fw_cell = tf.compat.v1.nn.rnn_cell.GRUCell(rnn_num_hidden)
         elif rnn_cell == 'Basic':
@@ -112,9 +110,9 @@ def rnn(x,
         # Get lstm cell output
 
         try:
-            outputs, _ = rnn.static_rnn(fw_cell, x, dtype=tf.float32)
+            outputs, _ = tf.keras.layers.RNN(fw_cell, unroll=True)(x)
         except Exception:  # Old TensorFlow version only returns outputs not states
-            outputs = rnn.static_rnn(fw_cell, x, dtype=tf.float32)
+            outputs = tf.keras.layers.RNN(fw_cell, unroll=True)(x)
         outputs = tf.stack(outputs, axis=time_axis)
         for i in range(hidden_dense):
             outputs = Dense(outputs, dense_dim)

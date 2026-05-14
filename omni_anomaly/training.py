@@ -13,6 +13,8 @@ from tfsnippet.utils import (reopen_variable_scope,
 
 from omni_anomaly.utils import BatchSlidingWindow
 
+tf.compat.v1.disable_eager_execution()
+
 __all__ = ['Trainer']
 
 
