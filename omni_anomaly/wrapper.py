@@ -2,6 +2,7 @@
 import logging
 
 import tensorflow as tf
+from tensorflow.keras.layers import Dense
 import tensorflow_probability as tfp
 from tfsnippet.distributions import Distribution
 
@@ -77,7 +78,7 @@ class TfpDistribution(Distribution):
 
 
 def softplus_std(inputs, units, epsilon, name):
-    return tf.nn.softplus(tf.layers.dense(inputs, units, name=name, reuse=tf.compat.v1.AUTO_REUSE)) + epsilon
+    return tf.nn.softplus(Dense(inputs, units, name=name, reuse=tf.compat.v1.AUTO_REUSE)) + epsilon
 
 
 def rnn(x,
@@ -116,7 +117,7 @@ def rnn(x,
             outputs = rnn.static_rnn(fw_cell, x, dtype=tf.float32)
         outputs = tf.stack(outputs, axis=time_axis)
         for i in range(hidden_dense):
-            outputs = tf.layers.dense(outputs, dense_dim)
+            outputs = Dense(outputs, dense_dim)
         return outputs
     # return size: (batch_size, window_length, rnn_num_hidden)
 
