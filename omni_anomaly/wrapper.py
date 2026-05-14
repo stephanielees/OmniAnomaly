@@ -2,7 +2,7 @@
 import logging
 
 import tensorflow as tf
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dense, RNN, GRUCell
 import tensorflow_probability as tfp
 from tfsnippet.distributions import Distribution
 
@@ -94,14 +94,14 @@ def rnn(x,
             x = tf.reduce_mean(x, axis=0)
         elif len(x.shape) != 3:
             logging.error("rnn input shape error")
-        x = tf.unstack(x, window_length, time_axis)
+        #x = tf.unstack(x, window_length, time_axis)
 
         if rnn_cell == 'LSTM':
             # Define lstm cells with TensorFlow
             # Forward direction cell
             fw_cell = tf.compat.v1.nn.rnn_cell.LSTMCell(rnn_num_hidden, forget_bias=1.0)
         elif rnn_cell == "GRU":
-            fw_cell = tf.compat.v1.nn.rnn_cell.GRUCell(rnn_num_hidden)
+            fw_cell = GRUCell(rnn_num_hidden)
         elif rnn_cell == 'Basic':
             fw_cell = tf.compat.v1.nn.rnn_cell.BasicRNNCell(rnn_num_hidden)
         else:
@@ -110,12 +110,12 @@ def rnn(x,
         # Get lstm cell output
 
         try:
-            outputs, _ = tf.keras.layers.RNN(fw_cell, unroll=True)(x)
+            outputs, _ = RNN(fw_cell, unroll=True)(x)
         except Exception:  # Old TensorFlow version only returns outputs not states
-            outputs = tf.keras.layers.RNN(fw_cell, unroll=True)(x)
-        outputs = tf.stack(outputs, axis=time_axis)
+            outputs = RNN(fw_cell, return_sequences=True, unroll=True)(x)
+        #outputs = tf.stack(outputs, axis=time_axis)
         for i in range(hidden_dense):
-            outputs = Dense(outputs, dense_dim)
+            outputs = Dense(dense_dim)(outputs)
         return outputs
     # return size: (batch_size, window_length, rnn_num_hidden)
 
