@@ -78,7 +78,7 @@ class TfpDistribution(Distribution):
 
 
 def softplus_std(inputs, units, epsilon, name):
-    return tf.nn.softplus(Dense(inputs, units, name=name, reuse=tf.compat.v1.AUTO_REUSE)) + epsilon
+    return tf.nn.softplus(Dense(units, name=name)(inputs)) + epsilon
 
 
 def rnn(x,
@@ -124,7 +124,7 @@ def wrap_params_net(inputs, h_for_dist, mean_layer, std_layer):
     with tf.compat.v1.variable_scope('hidden', reuse=tf.compat.v1.AUTO_REUSE):
         h = h_for_dist(inputs)
     return {
-        'mean': mean_layer(h),
+        'mean': mean_layer()(h),
         'std': std_layer(h),
     }
 

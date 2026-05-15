@@ -40,7 +40,7 @@ class RecurrentDistribution(Distribution):
         input_q_n = tf.broadcast_to(input_q_n,
                                     [tf.shape(z_previous)[0], tf.shape(input_q_n)[0], input_q_n.shape[1]])
         input_q = tf.concat([input_q_n, z_previous], axis=-1)
-        mu_q = self.mean_q_mlp(input_q)  # n_sample * batch_size * z_dim
+        mu_q = self.mean_q_mlp()(input_q)  # n_sample * batch_size * z_dim
 
         std_q = self.std_q_mlp(input_q)  # n_sample * batch_size * z_dim
 
@@ -59,7 +59,7 @@ class RecurrentDistribution(Distribution):
             input_q_n = tf.broadcast_to(input_q_n,
                                         [tf.shape(given_n)[0], tf.shape(input_q_n)[0], input_q_n.shape[1]])
         input_q = tf.concat([given_n, input_q_n], axis=-1)
-        mu_q = self.mean_q_mlp(input_q)
+        mu_q = self.mean_q_mlp()(input_q)
 
         std_q = self.std_q_mlp(input_q)
         logstd_q = tf.math.log(std_q)
