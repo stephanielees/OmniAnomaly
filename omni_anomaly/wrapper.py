@@ -98,7 +98,7 @@ def rnn(x,
             x = tf.reduce_mean(x, axis=0)
         elif len(x.shape) != 3:
             logging.error("rnn input shape error")
-        #x = tf.unstack(x, window_length, time_axis)
+        x = tf.unstack(x, window_length, time_axis)
 
         if rnn_cell == 'LSTM':
             # Define lstm cells with TensorFlow
@@ -119,8 +119,8 @@ def rnn(x,
         try:
             outputs, _ = tf.keras.layers.RNN(fw_cell, unroll=True)(x)
         except Exception:  # Old TensorFlow version only returns outputs not states
-            outputs = tf.keras.layers.RNN(fw_cell, return_sequences=True, unroll=True)(x)
-        #outputs = tf.stack(outputs, axis=time_axis)
+            outputs = tf.keras.layers.RNN(fw_cell, unroll=True)(x)
+        outputs = tf.stack(outputs, axis=time_axis)
         for i in range(hidden_dense):
             outputs = dense_layers[f'dense{i}'](outputs)
         return outputs
