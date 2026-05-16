@@ -222,7 +222,7 @@ class Trainer(VarScopeObject):
 
         # initialize the variables of the trainer, and the model
         sess.run(self._trainer_initializer)
-        ensure_variables_initialized(self._train_params)
+        ensure_variables_initialized()
 
         # training loop
         lr = self._initial_lr
