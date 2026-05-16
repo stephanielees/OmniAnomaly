@@ -452,7 +452,7 @@ class VAE(VarScopeObject):
         Args:
             inputs: The input `x`.
             n_z: Number of samples to taken for `z`. (default :obj:`None`)
-            \**kwargs: Capturing and ignoring all other parameters.  This is
+            **kwargs: Capturing and ignoring all other parameters.  This is
                 the default behavior of a :class:`Module`.
 
         Returns:
@@ -492,7 +492,7 @@ class Lambda(VarScopeObject):
         Construct the :class:`Lambda`.
 
         Args:
-            f ((inputs, \**kwargs) -> outputs): The function or lambda
+            f ((inputs, **kwargs) -> outputs): The function or lambda
                 expression which derives the outputs.
             name (str): Optional name of this module
                 (argument of :class:`~tfsnippet.utils.VarScopeObject`).
