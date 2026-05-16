@@ -2,6 +2,7 @@
 import logging
 
 import tensorflow as tf
+from tensorflow.keras.layers import Dense, RNN, GRUCell
 import tensorflow_probability as tfp
 from tfsnippet.distributions import Distribution
 
@@ -127,7 +128,7 @@ def wrap_params_net(inputs, h_for_dist, mean_layer, std_layer):
     with tf.compat.v1.variable_scope('hidden', reuse=tf.compat.v1.AUTO_REUSE):
         h = h_for_dist(inputs)
     return {
-        'mean': mean_layer(h),
+        'mean': mean_layer()(h),
         'std': std_layer(h),
     }
 
