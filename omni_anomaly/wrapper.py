@@ -112,14 +112,17 @@ def rnn(x,
             raise ValueError("rnn_cell must be LSTM or GRU")
 
         # Get lstm cell output
-
+        dense_layers = {}
+        for i in range(hidden_dense):
+            dense_layers[f'dense{i}'] = tf.keras.layers.Dense(dense_dim)
+        
         try:
             outputs, _ = tf.keras.layers.RNN(fw_cell, unroll=True)(x)
         except Exception:  # Old TensorFlow version only returns outputs not states
             outputs = tf.keras.layers.RNN(fw_cell, return_sequences=True, unroll=True)(x)
         #outputs = tf.stack(outputs, axis=time_axis)
         for i in range(hidden_dense):
-            outputs = tf.keras.layers.Dense(dense_dim)(outputs)
+            outputs = dense_layers[f'dense{i}'](outputs)
         return outputs
     # return size: (batch_size, window_length, rnn_num_hidden)
 
