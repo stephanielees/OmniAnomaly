@@ -170,7 +170,7 @@ class BatchSlidingWindow(object):
         else:
             mask = np.ones([array_size], dtype=np.bool)
         mask[: window_size - 1] = False
-        where_excludes = np.where(excludes)[0]
+        where_excludes = np.atleast_1d(excludes).nonzero()[0]
         for k in range(1, window_size):
             also_excludes = where_excludes + k
             also_excludes = also_excludes[also_excludes < array_size]

@@ -3,6 +3,7 @@ from functools import partial
 
 import tensorflow as tf
 import tfsnippet as spt
+from tensorflow.keras.layers import Dense
 from tensorflow.python.ops.linalg.linear_operator_identity import LinearOperatorIdentity
 from tensorflow_probability.python.distributions import LinearGaussianStateSpaceModel, MultivariateNormalDiag
 from tfsnippet.distributions import Normal
@@ -11,13 +12,20 @@ from tfsnippet.variational import VariationalInference
 
 from omni_anomaly.recurrent_distribution import RecurrentDistribution
 from omni_anomaly.vae import Lambda, VAE
-from omni_anomaly.wrapper import TfpDistribution, softplus_std, rnn, wrap_params_net
+from omni_anomaly.wrapper import TfpDistribution, softplus_std, rnn, apply_dense, wrap_params_net
 
 
 class OmniAnomaly(VarScopeObject):
     def __init__(self, config, name=None, scope=None):
         self.config = config
         super(OmniAnomaly, self).__init__(name=name, scope=scope)
+        
+        # create layer instances
+        z_mean_dense_layer = Dense(units=config.z_dim, name='z_mean')
+        x_mean_dense_layer = Dense(units=config.x_dim, name='x_mean')
+        z_std_dense_layer = Dense(units=config.z_dim, name='z_std')
+        x_std_dense_layer = Dense(units=config.x_dim, name='x_std')
+        
         with reopen_variable_scope(self.variable_scope):
             if config.posterior_flow_type == 'nf':
                 self._posterior_flow = spt.layers.planar_normalizing_flows(
@@ -43,9 +51,8 @@ class OmniAnomaly(VarScopeObject):
                 ) if config.use_connected_z_p else Normal(mean=tf.zeros([config.z_dim]), std=tf.ones([config.z_dim])),
                 p_x_given_z=Normal,
                 q_z_given_x=partial(RecurrentDistribution,
-                                    mean_q_mlp=partial(tf.layers.dense, units=config.z_dim, name='z_mean', reuse=tf.compat.v1.AUTO_REUSE),
-                                    std_q_mlp=partial(softplus_std, units=config.z_dim, epsilon=config.std_epsilon,
-                                                      name='z_std'),
+                                    mean_q_mlp=partial(apply_dense, dense_layer=z_mean_dense_layer),
+                                    std_q_mlp=partial(softplus_std, layers=z_std_dense_layer, epsilon=config.std_epsilon),
                                     z_dim=config.z_dim, window_length=config.window_length) if config.use_connected_z_q else Normal,
                 h_for_p_x=Lambda(
                     partial(
@@ -56,13 +63,8 @@ class OmniAnomaly(VarScopeObject):
                                                  hidden_dense=2,
                                                  dense_dim=config.dense_dim,
                                                  name='rnn_p_x'),
-                        mean_layer=partial(
-                            tf.layers.dense, units=config.x_dim, name='x_mean', reuse=tf.compat.v1.AUTO_REUSE
-                        ),
-                        std_layer=partial(
-                            softplus_std, units=config.x_dim, epsilon=config.std_epsilon,
-                            name='x_std'
-                        )
+                        mean_layer=partial(apply_dense, dense_layer=x_mean_dense_layer),
+                        std_layer=partial(softplus_std, layers=x_std_dense_layer, epsilon=config.std_epsilon)
                     ),
                     name='p_x_given_z'
                 ),
@@ -83,13 +85,8 @@ class OmniAnomaly(VarScopeObject):
                                                  hidden_dense=2,
                                                  dense_dim=config.dense_dim,
                                                  name="rnn_q_z"),
-                        mean_layer=partial(
-                            tf.layers.dense, units=config.z_dim, name='z_mean', reuse=tf.compat.v1.AUTO_REUSE
-                        ),
-                        std_layer=partial(
-                            softplus_std, units=config.z_dim, epsilon=config.std_epsilon,
-                            name='z_std'
-                        )
+                        mean_layer=partial(apply_dense, dense_layer=z_mean_dense_layer),
+                        std_layer=partial(softplus_std, layers=z_std_dense_layer, epsilon=config.std_epsilon)
                     ),
                     name='q_z_given_x'
                 )

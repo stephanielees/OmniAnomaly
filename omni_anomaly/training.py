@@ -159,11 +159,11 @@ class Trainer(VarScopeObject):
                     grad_vars, global_step=self._global_step)
 
             # the training summary in case `summary_dir` is specified
-            with tf.compat.v1.name_scope('summary'):
-                self._summary_op = tf.compat.v1.summary.merge([
-                    tf.summary.histogram(v.name.rsplit(':', 1)[0], v)
-                    for v in six.itervalues(self._train_params)
-                ])
+            #with tf.compat.v1.name_scope('summary'):
+            #    self._summary_op = tf.compat.v1.summary.merge([
+            #        tf.summary.histogram(v.name.rsplit(':', 1)[0], v)
+            #        for v in six.itervalues(self._train_params)
+            #    ])
 
             # initializer for the variables
             self._trainer_initializer = tf.compat.v1.variables_initializer(
@@ -220,7 +220,7 @@ class Trainer(VarScopeObject):
 
         # initialize the variables of the trainer, and the model
         sess.run(self._trainer_initializer)
-        ensure_variables_initialized(self._train_params)
+        ensure_variables_initialized()
 
         # training loop
         lr = self._initial_lr
@@ -255,7 +255,11 @@ class Trainer(VarScopeObject):
                         loop.collect_metrics({'train_time': train_duration})
                         # collect variable summaries
                         if summary_dir is not None:
-                            loop.add_summary(sess.run(self._summary_op))
+                            writer = tf.summary.create_file_writer(summary_dir)
+                            with writer.as_default(step=step):
+                                for k, v in six.iteritems(self._train_params):
+                                    tf.summary.histogram(k, v)
+                            #loop.add_summary(sess.run(self._summary_op))
 
                         # do validation in batches
                         with loop.timeit('valid_time'), \

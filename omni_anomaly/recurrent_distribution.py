@@ -40,7 +40,7 @@ class RecurrentDistribution(Distribution):
         input_q_n = tf.broadcast_to(input_q_n,
                                     [tf.shape(z_previous)[0], tf.shape(input_q_n)[0], input_q_n.shape[1]])
         input_q = tf.concat([input_q_n, z_previous], axis=-1)
-        mu_q = self.mean_q_mlp(input_q, reuse=tf.compat.v1.AUTO_REUSE)  # n_sample * batch_size * z_dim
+        mu_q = self.mean_q_mlp(input_q)  # n_sample * batch_size * z_dim
 
         std_q = self.std_q_mlp(input_q)  # n_sample * batch_size * z_dim
 
@@ -59,7 +59,7 @@ class RecurrentDistribution(Distribution):
             input_q_n = tf.broadcast_to(input_q_n,
                                         [tf.shape(given_n)[0], tf.shape(input_q_n)[0], input_q_n.shape[1]])
         input_q = tf.concat([given_n, input_q_n], axis=-1)
-        mu_q = self.mean_q_mlp(input_q, reuse=tf.compat.v1.AUTO_REUSE)
+        mu_q = self.mean_q_mlp(input_q)
 
         std_q = self.std_q_mlp(input_q)
         logstd_q = tf.math.log(std_q)
@@ -102,13 +102,14 @@ class RecurrentDistribution(Distribution):
 
             time_indices_shape = tf.convert_to_tensor([n_samples, tf.shape(self.input_q)[1], self.z_dim])
 
-            samples = tf.scan(fn=self.sample_step,
-                              elems=(noise, self.input_q),
-                              initializer=(tf.zeros(time_indices_shape),
-                                           tf.zeros(time_indices_shape),
-                                           tf.ones(time_indices_shape)),
-                              back_prop=False
-                              )[0]  # time_step * n_samples * batch_size * z_dim
+            samples = tf.nest.map_structure(tf.stop_gradient,
+                                            tf.scan(fn=self.sample_step,
+                                                    elems=(noise, self.input_q),
+                                                    initializer=(tf.zeros(time_indices_shape),
+                                                                tf.zeros(time_indices_shape),
+                                                                tf.ones(time_indices_shape)),
+                                                    )[0]
+                                           )                                                    # time_step * n_samples * batch_size * z_dim
 
             samples = tf.transpose(samples, [1, 2, 0, 3])  # n_samples * batch_size * time_step *  z_dim
 
@@ -142,11 +143,12 @@ class RecurrentDistribution(Distribution):
             else:
                 time_indices_shape = tf.convert_to_tensor([tf.shape(self.input_q)[1], self.z_dim])
                 given = tf.transpose(given, [1, 0, 2])
-            log_prob = tf.scan(fn=self.log_prob_step,
-                               elems=(given, self.input_q),
-                               initializer=tf.zeros(time_indices_shape),
-                               back_prop=False
-                               )
+            log_prob = tf.nest.map_structure(tf.stop_gradient,
+                                            tf.scan(fn=self.log_prob_step,
+                                                    elems=(given, self.input_q),
+                                                    initializer=tf.zeros(time_indices_shape)
+                                                    )
+                                            )
             if len(given.shape) > 3:
                 log_prob = tf.transpose(log_prob, [1, 2, 0, 3])
             else:
