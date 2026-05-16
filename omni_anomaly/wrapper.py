@@ -77,12 +77,12 @@ class TfpDistribution(Distribution):
             return log_prob
 
 
-def softplus_std(inputs, layers, epsilon):
-    return tf.nn.softplus(apply_dense(inputs, layers)) + epsilon
-
-    
 def apply_dense(inputs, dense_layer):
     return dense_layer(inputs)
+
+
+def softplus_std(inputs, layers, epsilon):
+    return tf.nn.softplus(apply_dense(inputs, layers)) + epsilon
 
 
 def rnn(x,
