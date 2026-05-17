@@ -12,7 +12,7 @@ from tfsnippet.variational import VariationalInference
 
 from omni_anomaly.recurrent_distribution import RecurrentDistribution
 from omni_anomaly.vae import Lambda, VAE
-from omni_anomaly.wrapper import TfpDistribution, softplus_std, rnn, apply_dense, wrap_params_net
+from omni_anomaly.wrapper import TfpDistribution, softplus_std, rnn, create_rnn, apply_dense, wrap_params_net
 
 
 class OmniAnomaly(VarScopeObject):
@@ -25,6 +25,8 @@ class OmniAnomaly(VarScopeObject):
         x_mean_dense_layer = Dense(units=config.x_dim, name='x_mean')
         z_std_dense_layer = Dense(units=config.z_dim, name='z_std')
         x_std_dense_layer = Dense(units=config.x_dim, name='x_std')
+        rnn_p_x_layer = create_rnn(rnn_num_hidden=config.rnn_num_hidden)
+        rnn_q_z_layer = create_rnn(rnn_num_hidden=config.rnn_num_hidden)
         
         with reopen_variable_scope(self.variable_scope):
             if config.posterior_flow_type == 'nf':
@@ -59,7 +61,7 @@ class OmniAnomaly(VarScopeObject):
                         wrap_params_net,
                         h_for_dist=lambda x: rnn(x=x,
                                                  window_length=config.window_length,
-                                                 rnn_num_hidden=config.rnn_num_hidden,
+                                                 rnn_layer=rnn_p_x_layer,
                                                  hidden_dense=2,
                                                  dense_dim=config.dense_dim,
                                                  name='rnn_p_x'),
@@ -71,7 +73,7 @@ class OmniAnomaly(VarScopeObject):
                 h_for_q_z=Lambda(
                     lambda x: {'input_q': rnn(x=x,
                                               window_length=config.window_length,
-                                              rnn_num_hidden=config.rnn_num_hidden,
+                                              rnn_layer=rnn_q_z_layer,
                                               hidden_dense=2,
                                               dense_dim=config.dense_dim,
                                               name="rnn_q_z")},
@@ -81,7 +83,7 @@ class OmniAnomaly(VarScopeObject):
                         wrap_params_net,
                         h_for_dist=lambda x: rnn(x=x,
                                                  window_length=config.window_length,
-                                                 rnn_num_hidden=config.rnn_num_hidden,
+                                                 rnn_layer=rnn_q_z_layer,
                                                  hidden_dense=2,
                                                  dense_dim=config.dense_dim,
                                                  name="rnn_q_z"),

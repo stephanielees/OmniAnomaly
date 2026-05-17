@@ -85,10 +85,25 @@ def softplus_std(inputs, layers, epsilon):
     return tf.nn.softplus(apply_dense(inputs, layers)) + epsilon
 
 
+def create_rnn(rnn_num_hidden, rnn_cell='GRU'):
+    if rnn_cell == 'LSTM':
+        # Define lstm cells with TensorFlow
+        # Forward direction cell
+        fw_cell = tf.keras.layers.LSTMCell(rnn_num_hidden, forget_bias=1.0)
+    elif rnn_cell == "GRU":
+        fw_cell = tf.keras.layers.GRUCell(rnn_num_hidden)
+    elif rnn_cell == 'Basic':
+        fw_cell = tf.keras.layers.SimpleRNNCell(rnn_num_hidden)
+    else:
+        raise ValueError("rnn_cell must be LSTM or GRU")
+        
+    rnn_layer = tf.keras.layers.RNN(fw_cell, unroll=True)
+    return rnn_layer
+    
+    
 def rnn(x,
         window_length,
-        rnn_num_hidden,
-        rnn_cell='GRU',
+        rnn_layer,
         hidden_dense=2,
         dense_dim=200,
         time_axis=1,
@@ -100,26 +115,26 @@ def rnn(x,
             logging.error("rnn input shape error")
         x = tf.unstack(x, window_length, time_axis)
 
-        if rnn_cell == 'LSTM':
-            # Define lstm cells with TensorFlow
-            # Forward direction cell
-            fw_cell = tf.keras.layers.LSTMCell(rnn_num_hidden, forget_bias=1.0)
-        elif rnn_cell == "GRU":
-            fw_cell = tf.keras.layers.GRUCell(rnn_num_hidden)
-        elif rnn_cell == 'Basic':
-            fw_cell = tf.keras.layers.SimpleRNNCell(rnn_num_hidden)
-        else:
-            raise ValueError("rnn_cell must be LSTM or GRU")
+        #if rnn_cell == 'LSTM':
+        #    # Define lstm cells with TensorFlow
+        #    # Forward direction cell
+        #    fw_cell = tf.keras.layers.LSTMCell(rnn_num_hidden, forget_bias=1.0)
+        #elif rnn_cell == "GRU":
+        #    fw_cell = tf.keras.layers.GRUCell(rnn_num_hidden)
+        #elif rnn_cell == 'Basic':
+        #    fw_cell = tf.keras.layers.SimpleRNNCell(rnn_num_hidden)
+        #else:
+        #    raise ValueError("rnn_cell must be LSTM or GRU")
 
         # Get lstm cell output
         dense_layers = {}
         for i in range(hidden_dense):
             dense_layers[f'dense{i}'] = tf.keras.layers.Dense(dense_dim)
         
-        try:
-            outputs, _ = tf.keras.layers.RNN(fw_cell, unroll=True)(x)
-        except Exception:  # Old TensorFlow version only returns outputs not states
-            outputs = tf.keras.layers.RNN(fw_cell, unroll=True)(x)
+        #try:
+        #    outputs, _ = rnn_layer(x)
+        #except Exception:  # Old TensorFlow version only returns outputs not states
+        outputs = rnn_layer(x)
         outputs = tf.stack(outputs, axis=time_axis)
         for i in range(hidden_dense):
             outputs = dense_layers[f'dense{i}'](outputs)
